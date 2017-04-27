@@ -15,8 +15,11 @@
 namespace Castle.Services.Logging.NLogIntegration
 {
 	using System;
+    using System.Collections.Generic;
+	using System.Reflection;
+    using System.Reflection.Emit;
 
-	using Castle.Core.Logging;
+    using Castle.Core.Logging;
 
 	using NLog;
 	using NLog.Config;
@@ -28,13 +31,29 @@ namespace Castle.Services.Logging.NLogIntegration
 	{
 		internal const string defaultConfigFileName = "nlog.config";
 
-		/// <summary>
-		///   Initializes a new instance of the <see cref="NLogFactory" /> class.
-		/// </summary>
-		public NLogFactory()
+        private readonly MappedDiagnosticsLogicalContextDelegate logicalThreadDictionary;
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="NLogFactory" /> class.
+        /// </summary>
+        public NLogFactory()
 			: this(defaultConfigFileName)
 		{
-		}
+            /* 
+                The following creates an easy way to get at the private static LogicalThreadDictionary of NLog's MappedDiagnosticsLogicalContext.
+                It does some IL emitting, so it's not the most maintainable, but it's a once only cost at applicaiton startup.
+                There are probably other ways to achieve the same thing, but none as performant.
+            */
+            var type1 = typeof(MappedDiagnosticsContext);
+            var getLogicalThreadDictionary1 = type1.GetMethod("GetLogicalThreadDictionary", BindingFlags.Static | BindingFlags.NonPublic);
+
+            var method1 = new DynamicMethod("GetMappedDiagnosticsLogicalContext", typeof(IDictionary<string, object>), null, typeof(MappedDiagnosticsLogicalContext), true);
+            var ilGen1 = method1.GetILGenerator();
+            ilGen1.Emit(OpCodes.Call, getLogicalThreadDictionary1);
+            ilGen1.Emit(OpCodes.Ret);
+
+            logicalThreadDictionary = (MappedDiagnosticsLogicalContextDelegate)method1.CreateDelegate(typeof(MappedDiagnosticsLogicalContextDelegate));
+        }
 
 		/// <summary>
 		///   Initializes a new instance of the <see cref="NLogFactory" /> class.
@@ -78,8 +97,8 @@ namespace Castle.Services.Logging.NLogIntegration
 		public override Core.Logging.ILogger Create(String name)
 		{
 			var log = LogManager.GetLogger(name);
-			return new NLogLogger(log, this);
-		}
+            return new NLogLogger(log, this, logicalThreadDictionary);
+        }
 
 		/// <summary>
 		///   Not implemented, NLog logger levels cannot be set at runtime.

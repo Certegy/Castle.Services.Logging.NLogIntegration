@@ -15,26 +15,35 @@
 namespace Castle.Services.Logging.NLogIntegration
 {
 	using System;
+	using System.Collections.Generic;
 
-	using NLog;
+    using NLog;
 
 	/// <summary>
 	///   Implementation of <see cref="Castle.Core.Logging.ILogger" /> for NLog.
 	/// </summary>
 	public class NLogLogger : Castle.Core.Logging.ILogger
 	{
-		/// <summary>
-		///   Initializes a new instance of the <see cref="NLogLogger" /> class.
-		/// </summary>
-		/// <param name="logger"> The logger. </param>
-		/// <param name="factory"> The factory. </param>
-		public NLogLogger(Logger logger, NLogFactory factory)
+        private readonly MappedDiagnosticsLogicalContextDelegate mappedDiagnosticsLogicalContextDelegate;
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="NLogLogger" /> class.
+        /// </summary>
+        /// <param name="logger"> The logger. </param>
+        /// <param name="factory"> The factory. </param>
+        public NLogLogger(Logger logger, NLogFactory factory)
 		{
 			Logger = logger;
 			Factory = factory;
 		}
 
-		internal NLogLogger()
+        public NLogLogger(Logger logger, NLogFactory factory, MappedDiagnosticsLogicalContextDelegate mappedDiagnosticsLogicalContextDelegate) 
+            : this(logger, factory)
+        {
+            this.mappedDiagnosticsLogicalContextDelegate = mappedDiagnosticsLogicalContextDelegate;
+        }
+
+        internal NLogLogger()
 		{
 		}
 
@@ -496,51 +505,69 @@ namespace Castle.Services.Logging.NLogIntegration
 
 		private void Log(LogLevel logLevel, string message)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, message));
-		}
+            var logEventInfo = new LogEventInfo(logLevel, Logger.Name, message);
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 
 		private void Log(LogLevel logLevel, string format, object[] args)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, format)
-				{
-					Parameters = args
-				});
-		}
+            var logEventInfo = new LogEventInfo(logLevel, Logger.Name, format)
+            {
+                Parameters = args
+            };
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 
 		private void Log(LogLevel logLevel, string message, Exception exception)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, message)
-				{
-					Exception = exception
-				});
-		}
+            var logEventInfo = new LogEventInfo(logLevel, Logger.Name, message)
+            {
+                Exception = exception,
+            };
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 
 		private void Log(LogLevel logLevel, Exception exception, string format, object[] args)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, format)
-				{
-					Exception = exception,
-					Parameters = args
-				});
-		}
+			var logEventInfo = new LogEventInfo(logLevel, Logger.Name, format)
+            {
+                Exception = exception,
+                Parameters = args
+            };
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 
 		private void Log(LogLevel logLevel, IFormatProvider formatProvider, string format, object[] args)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, format)
-				{
-					FormatProvider = formatProvider,
-					Parameters = args
-				});
-		}
+            var logEventInfo = new LogEventInfo(logLevel, Logger.Name, format)
+            {
+                FormatProvider = formatProvider,
+                Parameters = args,
+            };
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 
 		private void Log(LogLevel logLevel, Exception exceptoin, IFormatProvider formatProvider, string format, object[] args)
 		{
-			Logger.Log(typeof(NLogLogger), new LogEventInfo(logLevel, Logger.Name, format)
-				{
-					Exception = exceptoin,
-					FormatProvider = formatProvider,
-					Parameters = args
-				});
-		}
+            var logEventInfo = new LogEventInfo(logLevel, Logger.Name, format)
+            {
+                Exception = exceptoin,
+                FormatProvider = formatProvider,
+                Parameters = args,
+            };
+            mappedDiagnosticsLogicalContextDelegate()
+                .ForEach(context => logEventInfo.Properties.Add(context.Key, context.Value));
+            Logger.Log(typeof(NLogLogger), logEventInfo);
+        }
 	}
 }

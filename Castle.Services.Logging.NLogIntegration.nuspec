@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Castle.Services.Logging.NLogIntegration</id>
+    <version>1.0.0</version>
+    <title>Castle.Services.Logging.NLogIntegration</title>
+    <authors>Ryan Bartsch</authors>
+    <owners>Certegy</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/Certegy/Castle.Services.Logging.NLogIntegration</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Castle-NLog integration</description>
+    <releaseNotes>Added contextual capabilities.</releaseNotes>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.1">
+        <dependency id="Castle.Core" version="4.0.0" />
+        <dependency id="NLog" version="4.4.7" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
